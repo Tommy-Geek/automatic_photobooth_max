@@ -1,9 +1,10 @@
 from tkinter import *
 from gui_two_monitor import TwoMonitor
-from control_dir import new_time_dir, delet_all_photo, check_last_photo, copy_reserv
+from control_dir import new_time_dir, delet_all_photo, check_last_photo, copy_reserv, SESSION_PATH
 import threading
 from tkinter import simpledialog, messagebox
 import os
+from qr_code import create_qr
 import webbrowser
 from start import Prelaunch
 from remove_control import make_photo
@@ -17,6 +18,7 @@ class Main_window(Tk):
 
         self.geometry('700x500')
 
+        self.stop_flag = False
         self.monitor = TwoMonitor(self)
         self.copy_active = False
         self.copy_dir = None           # куда копируем
@@ -62,7 +64,7 @@ class Main_window(Tk):
             height=60            # высота 60 пикселей
         )
 
-        self.stop_button = Button(self.fr_stop, text = "Stop", command = self.stop)
+        self.stop_button = Button(self.fr_stop, text = "Show QR", state= DISABLED, command = self.stop)
         self.stop_button.place(
             relx=0.5,
             rely=0.5,
@@ -74,13 +76,14 @@ class Main_window(Tk):
     def start(self):
         self.monitor.start()
         self.start_button.config(state=DISABLED)
+        self.stop_button.config(state=NORMAL)
 
         self.copy_dir = new_time_dir()
         self.last_photo = None
         self.copy_active = True
+        self.stop_flag = False
 
         self.api.create_folder(self.copy_dir) #cоздам папку в я.д
-        url = self.publish_folder(self.copy_dir)
 
         print("start")
         self.check_photo()
@@ -102,12 +105,22 @@ class Main_window(Tk):
         
 
     def stop(self):
-        self.monitor.stop()
-        self.start_button.config(state=NORMAL)
-        self.copy_active = False
-        delet_all_photo()
+        if not self.stop_flag:
+            url = self.api.publish_folder(self.copy_dir)
+            create_qr(url, SESSION_PATH)
+            self.copy_active = False
+            self.stop_button.config(text="Stop", state=NORMAL)
+            self.stop_flag = True
+        
+        else:
+            self.monitor.stop()
+            self.start_button.config(state=NORMAL)
+            self.stop_button.config(state=DISABLED)
+            delet_all_photo()
+            self.stop_flag = False
 
     def destroy(self):
+        """автоматом убивает обьект второго монитора при закрытии"""
         if hasattr(self, 'monitor'):
             self.monitor.destroy()
         super().destroy()
