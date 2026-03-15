@@ -25,7 +25,7 @@ def new_time_dir():
     return full_path_time
 
 
-def check_last_photo():
+def check_last_photo(SESSION_PATH):
     '''получает полный путь последней фотографии добавленной в папку'''
     try:
         photo_list = os.listdir(SESSION_PATH)
@@ -56,3 +56,4 @@ def delet_all_photo():
 def b_and_w_dir(full_path_time):
     bw_dir = os.path.join(full_path_time, "bw_dir")
     os.makedirs(bw_dir, exist_ok=True)
+    return bw_dir

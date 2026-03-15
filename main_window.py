@@ -124,7 +124,9 @@ class Main_window(Tk):
         self.stop_button.config(state=NORMAL)
 
         self.copy_dir = new_time_dir()
-        b_and_w_dir(self.copy_dir)
+        self.bw_dir = b_and_w_dir(self.copy_dir)
+        new_photo = check_last_photo(self.bw_dir)
+        
         print("я создал чб")
 
     def check_photo(self):
