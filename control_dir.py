@@ -52,3 +52,7 @@ def delet_all_photo():
         else:
             path.unlink()
 
+
+def b_and_w_dir(full_path_time):
+    bw_dir = os.path.join(full_path_time, "bw_dir")
+    os.makedirs(bw_dir, exist_ok=True)

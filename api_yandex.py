@@ -33,6 +33,7 @@ class YandexAPI:
             self.client.upload(last_photo, disk_path)
 
     def publish_folder(self, copy_dir):
+        '''делает папаку публичной и возвращает ее url для формирования qrcode'''
         with self.client:
             folder_name = copy_dir[-16:].replace('\\', '_')
             self.client.publish(folder_name)

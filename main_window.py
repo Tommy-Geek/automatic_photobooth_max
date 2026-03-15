@@ -1,6 +1,13 @@
 from tkinter import *
 from gui_two_monitor import TwoMonitor
-from control_dir import new_time_dir, delet_all_photo, check_last_photo, copy_reserv, SESSION_PATH
+from control_dir import (
+    new_time_dir, 
+    delet_all_photo, 
+    check_last_photo, 
+    copy_reserv, 
+    SESSION_PATH, 
+    b_and_w_dir
+    )
 import threading
 from tkinter import simpledialog, messagebox
 import os
@@ -55,6 +62,16 @@ class Main_window(Tk):
         self.main_frame.columnconfigure(0, weight=1)
         self.main_frame.columnconfigure(1, weight=1)
 
+        self.enabled = BooleanVar()
+        self.check_box = Checkbutton(self.fr_settings, text = "B/W", variable=self.enabled, command = self.test_check_button)
+        self.check_box.place(
+            relx=0.5,           # 50% от ширины фрейма
+            rely=0.5,            # 50% от высоты фрейма
+            anchor=CENTER,       # центр кнопки в центре фрейма
+            width=150,           # ширина 150 пикселей
+            height=60            # высота 60 пикселей
+        )
+
         self.start_button = Button(self.fr_start, text = "Start", command = self.start)
         self.start_button.place(
             relx=0.5,           # 50% от ширины фрейма
@@ -73,7 +90,20 @@ class Main_window(Tk):
             height=60
         )
 
+
+    def test_check_button(self):
+        print(self.enabled.get())
+
+
     def start(self):
+        if not self.enabled.get():
+            self.normal_copying()
+
+        else:
+            self.b_w_copying()
+
+
+    def normal_copying(self):
         self.monitor.start()
         self.start_button.config(state=DISABLED)
         self.stop_button.config(state=NORMAL)
@@ -87,6 +117,15 @@ class Main_window(Tk):
 
         print("start")
         self.check_photo()
+
+    def b_w_copying(self):
+        self.monitor.start()
+        self.start_button.config(state=DISABLED)
+        self.stop_button.config(state=NORMAL)
+
+        self.copy_dir = new_time_dir()
+        b_and_w_dir(self.copy_dir)
+        print("я создал чб")
 
     def check_photo(self):
         if not self.copy_active:
