@@ -25,12 +25,12 @@ def new_time_dir():
     return full_path_time
 
 
-def check_last_photo(SESSION_PATH):
+def check_last_photo(path = SESSION_PATH):
     '''получает полный путь последней фотографии добавленной в папку'''
     try:
-        photo_list = os.listdir(SESSION_PATH)
+        photo_list = os.listdir(path)
         if photo_list:  # проверяем что список не пустой
-            last_photo = os.path.join(SESSION_PATH, photo_list[-1])
+            last_photo = os.path.join(path, photo_list[-1])
             return last_photo
         return None
     except (IndexError, FileNotFoundError):
@@ -54,6 +54,7 @@ def delet_all_photo():
 
 
 def b_and_w_dir(full_path_time):
-    bw_dir = os.path.join(full_path_time, "bw_dir")
+    bw_dir = os.path.join(full_path_time, "bw")
     os.makedirs(bw_dir, exist_ok=True)
     return bw_dir
+

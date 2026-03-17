@@ -15,6 +15,7 @@ from qr_code import create_qr
 import webbrowser
 from start import Prelaunch
 from remove_control import make_photo
+from bw import BWProcessor
 
 
 class Main_window(Tk):
@@ -26,6 +27,7 @@ class Main_window(Tk):
         self.geometry('700x500')
 
         self.stop_flag = False
+        self.bw_procces = BWProcessor()
         self.monitor = TwoMonitor(self)
         self.copy_active = False
         self.copy_dir = None           # куда копируем
@@ -63,7 +65,7 @@ class Main_window(Tk):
         self.main_frame.columnconfigure(1, weight=1)
 
         self.enabled = BooleanVar()
-        self.check_box = Checkbutton(self.fr_settings, text = "B/W", variable=self.enabled, command = self.test_check_button)
+        self.check_box = Checkbutton(self.fr_settings, text = "B/W", variable=self.enabled)
         self.check_box.place(
             relx=0.5,           # 50% от ширины фрейма
             rely=0.5,            # 50% от высоты фрейма
@@ -91,16 +93,13 @@ class Main_window(Tk):
         )
 
 
-    def test_check_button(self):
-        print(self.enabled.get())
-
-
     def start(self):
         if not self.enabled.get():
             self.normal_copying()
 
         else:
-            self.b_w_copying()
+            self.normal_copying()
+            self.bw_procces.start(self.copy_dir)
 
 
     def normal_copying(self):
@@ -117,17 +116,6 @@ class Main_window(Tk):
 
         print("start")
         self.check_photo()
-
-    def b_w_copying(self):
-        self.monitor.start()
-        self.start_button.config(state=DISABLED)
-        self.stop_button.config(state=NORMAL)
-
-        self.copy_dir = new_time_dir()
-        self.bw_dir = b_and_w_dir(self.copy_dir)
-        new_photo = check_last_photo(self.bw_dir)
-        
-        print("я создал чб")
 
     def check_photo(self):
         if not self.copy_active:
@@ -159,9 +147,12 @@ class Main_window(Tk):
             self.stop_button.config(state=DISABLED)
             delet_all_photo()
             self.stop_flag = False
+            self.bw_procces.stop()
 
     def destroy(self):
-        """автоматом убивает обьект второго монитора при закрытии"""
+        """автоматом убивает обьект второго монитора и краски при закрытии"""
+        if hasattr(self, 'bw_procces'):
+            self.bw_procces.stop()
         if hasattr(self, 'monitor'):
             self.monitor.destroy()
         super().destroy()

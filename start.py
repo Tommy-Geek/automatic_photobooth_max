@@ -7,6 +7,7 @@ import tkinter.simpledialog as simpledialog
 
 
 class Prelaunch():
+    """предзапуск над полностью переделать и пофиксить токен.txt"""
     def __init__(self):
         self.token_file = "token.txt"
         self.client_id = "aef14e72488c4f87bce1deff4d9120c6"
