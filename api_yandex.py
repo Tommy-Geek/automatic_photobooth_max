@@ -1,5 +1,6 @@
 import yadisk
 import os
+import requests
 
 class YandexAPI:
     def __init__(self, token):

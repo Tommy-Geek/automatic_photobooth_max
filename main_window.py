@@ -1,3 +1,5 @@
+import multiprocessing
+multiprocessing.freeze_support()
 from tkinter import *
 from gui_two_monitor import TwoMonitor
 from control_dir import (
@@ -16,6 +18,7 @@ import webbrowser
 from start import Prelaunch
 from remove_control import make_photo
 from bw import BWProcessor
+import sys
 
 
 class Main_window(Tk):
@@ -94,6 +97,7 @@ class Main_window(Tk):
 
 
     def start(self):
+        delet_all_photo()
         if not self.enabled.get():
             self.normal_copying()
 
@@ -159,15 +163,19 @@ class Main_window(Tk):
 
 if __name__ == "__main__":
     prelaunch = Prelaunch()
+    while True:
+        if prelaunch.start():
+            # Все проверки пройдены – выходим из цикла
+            break
+        else:
+            retry = messagebox.askyesno(
+                "Ошибка",
+                "Исправьте указанные проблемы и нажмите 'Да' для повторной проверки, или 'Нет' для выхода."
+            )
+            if not retry:
+                sys.exit(0)
     
-    # Запускаем все проверки
-    if prelaunch.start():
-        threading.Thread(
-            target = lambda: make_photo(), 
-            daemon = True).start()
-        # Если все проверки пройдены - получаем API и запускаем главное окно
-        api = prelaunch.get_api()  # API уже сохранен внутри prelaunch
-        Main_window(api).mainloop()
-    else:
-        # Если есть ошибки - программа уже показала сообщение и завершается
-        exit()
+    # Успешный предзапуск: запускаем фоновые задачи и главное окно
+    threading.Thread(target=lambda: make_photo(), daemon=True).start()
+    api = prelaunch.get_api()
+    Main_window(api).mainloop()

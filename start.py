@@ -4,6 +4,7 @@ import os
 import tkinter.messagebox as messagebox
 import webbrowser
 import tkinter.simpledialog as simpledialog
+import sys
 
 
 class Prelaunch():
@@ -36,7 +37,7 @@ class Prelaunch():
             return False, f"Ошибка при запуске digiCamControl: {e}"
 
     def check_seconde_monitor(self):
-        '''проверяю есть ли в системе второй монитор'''
+        '''проверяю есть ли в системе второй монитор скип при запуске если false'''
         try:
             monitors = screeninfo.get_monitors()
             if len(monitors) < 2:
@@ -52,6 +53,7 @@ class Prelaunch():
             return True
         return False, "Проверьте путь сессии: должна быть папка Session1 в %userprofile%\\Pictures\\digiCamControl\\"
 
+
     def check_reserv(self):
         '''проверяю есть ли папка для резерв файлов'''
         reserv = os.path.expandvars("%userprofile%\\Desktop\\Reserv")
@@ -64,13 +66,28 @@ class Prelaunch():
         except Exception as e:
             return False, f"Не удалось создать папку резерва: {e}"
 
+    def get_base_path(self):
+        #парсим базавый путь файла если это .exe или .py
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        else:
+            return os.path.dirname(os.path.abspath(__file__))
+
+
     def load_token(self):
         '''загружает токен из файла'''
+        token_path = os.path.join(self.get_base_path(), self.token_file)
         try:
-            with open(self.token_file, "r") as f:
+            with open(token_path, "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
             return None
+
+    def save_token(self, token):
+        token_path = os.path.join(self.get_base_path(), self.token_file)
+        with open(token_path, "w") as file:
+            file.write(token.strip())
+            
 
     def check_yandex_token(self):
         '''проверяю токен Яндекс.Диска'''
@@ -80,7 +97,7 @@ class Prelaunch():
             
             # Если токена нет - запрашиваем
             if token is None:
-                result = self._request_new_token(
+                result = self.request_new_token(
                     "Токен Яндекс.Диска", 
                     "Браузер открыт со страницей получения токена.\n"
                     "Вставьте полученный токен и нажмите ОК:"
@@ -96,7 +113,7 @@ class Prelaunch():
             
             if not self.api.check_token():
                 # Токен невалидный - запрашиваем новый
-                result = self._request_new_token(
+                result = self.request_new_token(
                     "Токен недействителен",
                     "Браузер открыт со страницей получения нового токена.\n"
                     "Вставьте новый токен и нажмите ОК:"
@@ -111,7 +128,7 @@ class Prelaunch():
         except Exception as e:
             return False, f"Ошибка при проверке токена Яндекс.Диска: {e}"
 
-    def _request_new_token(self, title, message):
+    def request_new_token(self, title, message):
         '''запрашивает новый токен у пользователя'''
         webbrowser.open(f"https://oauth.yandex.ru/authorize?response_type=token&client_id={self.client_id}")
         new_token = simpledialog.askstring(title, message)
@@ -124,7 +141,7 @@ class Prelaunch():
         temp_api = YandexAPI(new_token)
         
         if temp_api.check_token():
-            self._save_token(new_token)
+            self.save_token(new_token)
             self.api = temp_api  # Сохраняем API в атрибут класса
             return True
         else:
@@ -144,7 +161,7 @@ class Prelaunch():
             ("Второй монитор", self.check_seconde_monitor()),
             ("Сессия", self.check_session()),
             ("Папка резерва", self.check_reserv()),
-            ("Яндекс.Диск", self.check_yandex_token())  # Добавили проверку токена
+            ("Яндекс.Диск", self.check_yandex_token())
         ]
         
         for name, result in checks:
