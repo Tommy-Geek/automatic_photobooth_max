@@ -1,6 +1,6 @@
 import multiprocessing
 multiprocessing.freeze_support()
-from tkinter import *
+import customtkinter as ctk
 from gui_two_monitor import TwoMonitor
 from control_dir import (
     new_time_dir, 
@@ -11,88 +11,120 @@ from control_dir import (
     b_and_w_dir
     )
 import threading
-from tkinter import simpledialog, messagebox
-import os
+from tkinter import messagebox
 from qr_code import create_qr
-import webbrowser
 from start import Prelaunch
 from remove_control import make_photo
 from bw import BWProcessor
 import sys
 
 
-class Main_window(Tk):
+class Main_window(ctk.CTk):
     
     def __init__(self, api):
         super().__init__()
         self.api = api
 
+        ctk.set_appearance_mode("dark")
         self.geometry('700x500')
 
         self.stop_flag = False
         self.bw_procces = BWProcessor()
         self.monitor = TwoMonitor(self)
         self.copy_active = False
-        self.copy_dir = None           # куда копируем
+        self.copy_dir = None
         self.last_photo = None 
 
-        self.main_frame = Frame(self, bg = "white")
-        self.main_frame.pack(fill = BOTH, expand = True)
+        self.main_frame = ctk.CTkFrame(self)
+        self.main_frame.pack(fill = 'both', expand = True)
 
-        self.fr_label_info = Frame(self.main_frame, bg = 'green')
+        self.fr_label_info = ctk.CTkFrame(self.main_frame, height=50)
         self.fr_label_info.grid(row = 0, column = 0, sticky='nsew')
+        self.fr_label_info.grid_propagate(False)
 
-        self.fr_label_settings = Frame(self.main_frame, bg = 'red')
+        self.fr_label_settings = ctk.CTkFrame(self.main_frame, height=50)
         self.fr_label_settings.grid(row = 0, column = 1, sticky='nsew')
 
-        self.fr_info = Frame(self.main_frame, bg = 'black')
+        self.fr_info = ctk.CTkFrame(self.main_frame, fg_color='black')
         self.fr_info.grid(row = 1, column = 0, sticky='nsew')
 
-        self.fr_settings = Frame(self.main_frame, bg = 'orange')
+        self.fr_settings = ctk.CTkFrame(self.main_frame, fg_color='orange')
         self.fr_settings.grid(row = 1, column = 1, sticky='nsew')
 
-        self.fr_start = Frame(self.main_frame, bg = 'pink')
+        self.fr_start = ctk.CTkFrame(self.main_frame, fg_color='pink')
         self.fr_start.grid(row = 2, column = 0, sticky='nsew')
         self.fr_start.grid_propagate(False)
 
-        self.fr_stop = Frame(self.main_frame, bg = 'silver')
+        self.fr_stop = ctk.CTkFrame(self.main_frame, fg_color='silver')
         self.fr_stop.grid(row = 2, column = 1, sticky='nsew')
         self.fr_stop.grid_propagate(False)
 
 
-        self.main_frame.rowconfigure(0, weight=1)
-        self.main_frame.rowconfigure(1, weight=4)  
-        self.main_frame.rowconfigure(2, weight= 2)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(1, weight=4)  
+        self.main_frame.grid_rowconfigure(2, weight= 2)
 
-        self.main_frame.columnconfigure(0, weight=1)
-        self.main_frame.columnconfigure(1, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        self.main_frame.grid_columnconfigure(1, weight=1)
 
-        self.enabled = BooleanVar()
-        self.check_box = Checkbutton(self.fr_settings, text = "B/W", variable=self.enabled)
+        self.label = ctk.CTkLabel(
+            self.fr_label_info,
+            text='Information',
+            text_color='white',
+            corner_radius=10,
+            font=('Arial', 16)
+            )
+        self.label.place(relx=0.5, rely=0.5, anchor = 'center')
+
+        self.label = ctk.CTkLabel(
+            self.fr_label_settings,
+            text='Settings',
+            text_color='white',
+            corner_radius=10,
+            font=('Arial', 16)
+            )
+        self.label.place(relx=0.5, rely=0.5, anchor = 'center')
+
+
+        self.enabled = ctk.BooleanVar()
+        self.check_box = ctk.CTkCheckBox(
+            self.fr_settings, 
+            text = "B/W", 
+            variable=self.enabled, 
+            width=150,           
+            height=60 
+            )
         self.check_box.place(
             relx=0.5,           # 50% от ширины фрейма
             rely=0.5,            # 50% от высоты фрейма
-            anchor=CENTER,       # центр кнопки в центре фрейма
-            width=150,           # ширина 150 пикселей
-            height=60            # высота 60 пикселей
+            anchor='center',       # центр кнопки в центре фрейма            
         )
 
-        self.start_button = Button(self.fr_start, text = "Start", command = self.start)
+        self.start_button = ctk.CTkButton(
+            self.fr_start, 
+            text = "Start", 
+            command = self.start, 
+            width=150,
+            height=60
+            )
         self.start_button.place(
             relx=0.5,           # 50% от ширины фрейма
             rely=0.5,            # 50% от высоты фрейма
-            anchor=CENTER,       # центр кнопки в центре фрейма
-            width=150,           # ширина 150 пикселей
-            height=60            # высота 60 пикселей
+            anchor='center'       # центр кнопки в центре фрейма            
         )
 
-        self.stop_button = Button(self.fr_stop, text = "Show QR", state= DISABLED, command = self.stop)
+        self.stop_button = ctk.CTkButton(
+            self.fr_stop, 
+            text = "Show QR", 
+            state= 'disabled', 
+            command = self.stop, 
+            width=150,
+            height=60
+            )
         self.stop_button.place(
             relx=0.5,
             rely=0.5,
-            anchor=CENTER,
-            width=150,
-            height=60
+            anchor='center'
         )
 
 
@@ -108,8 +140,8 @@ class Main_window(Tk):
 
     def normal_copying(self):
         self.monitor.start()
-        self.start_button.config(state=DISABLED)
-        self.stop_button.config(state=NORMAL)
+        self.start_button.config(state='disabled')
+        self.stop_button.config(state='normal')
 
         self.copy_dir = new_time_dir()
         self.last_photo = None
@@ -142,13 +174,13 @@ class Main_window(Tk):
             url = self.api.publish_folder(self.copy_dir)
             create_qr(url, SESSION_PATH)
             self.copy_active = False
-            self.stop_button.config(text="Stop", state=NORMAL)
+            self.stop_button.config(text="Stop", state='normal')
             self.stop_flag = True
         
         else:
             self.monitor.stop()
-            self.start_button.config(state=NORMAL)
-            self.stop_button.config(state=DISABLED)
+            self.start_button.config(state='normal')
+            self.stop_button.config(state='disabled')
             delet_all_photo()
             self.stop_flag = False
             self.bw_procces.stop()
