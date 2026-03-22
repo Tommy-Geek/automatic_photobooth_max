@@ -46,5 +46,3 @@ def rotate_and_get_coords():
         dm.Fields = win32con.DM_PELSWIDTH | win32con.DM_PELSHEIGHT | win32con.DM_DISPLAYORIENTATION
         
         win32api.ChangeDisplaySettingsEx(d.DeviceName, dm)
-
-

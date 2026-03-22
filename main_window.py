@@ -28,6 +28,7 @@ class Main_window(ctk.CTk):
         ctk.set_appearance_mode("dark")
         self.geometry('700x500')
 
+        info = api.client.get_disk_info()
         self.stop_flag = False
         self.bw_procces = BWProcessor()
         self.monitor = TwoMonitor(self)
@@ -38,24 +39,24 @@ class Main_window(ctk.CTk):
         self.main_frame = ctk.CTkFrame(self)
         self.main_frame.pack(fill = 'both', expand = True)
 
-        self.fr_label_info = ctk.CTkFrame(self.main_frame, height=50)
+        self.fr_label_info = ctk.CTkFrame(self.main_frame, height=30)
         self.fr_label_info.grid(row = 0, column = 0, sticky='nsew')
         self.fr_label_info.grid_propagate(False)
 
-        self.fr_label_settings = ctk.CTkFrame(self.main_frame, height=50)
+        self.fr_label_settings = ctk.CTkFrame(self.main_frame, height=30)
         self.fr_label_settings.grid(row = 0, column = 1, sticky='nsew')
 
-        self.fr_info = ctk.CTkFrame(self.main_frame, fg_color='black')
+        self.fr_info = ctk.CTkFrame(self.main_frame, height=70)
         self.fr_info.grid(row = 1, column = 0, sticky='nsew')
 
-        self.fr_settings = ctk.CTkFrame(self.main_frame, fg_color='orange')
+        self.fr_settings = ctk.CTkFrame(self.main_frame, height=70)
         self.fr_settings.grid(row = 1, column = 1, sticky='nsew')
 
-        self.fr_start = ctk.CTkFrame(self.main_frame, fg_color='pink')
+        self.fr_start = ctk.CTkFrame(self.main_frame, height=50)
         self.fr_start.grid(row = 2, column = 0, sticky='nsew')
         self.fr_start.grid_propagate(False)
 
-        self.fr_stop = ctk.CTkFrame(self.main_frame, fg_color='silver')
+        self.fr_stop = ctk.CTkFrame(self.main_frame, height=70)
         self.fr_stop.grid(row = 2, column = 1, sticky='nsew')
         self.fr_stop.grid_propagate(False)
 
@@ -66,6 +67,24 @@ class Main_window(ctk.CTk):
 
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(1, weight=1)
+
+        self.user_login = ctk.CTkLabel(
+            self.fr_info,
+            text = f"Login: {info.user.display_name}",
+            text_color='white',
+            corner_radius=10,
+            font=('Arial',16)
+            )
+        self.user_login.pack(pady=5, anchor='w')
+
+        self.space = ctk.CTkLabel(
+            self.fr_info,
+            text = f"Space left: {round((info.total_space - info.used_space)/1024**3, 2)}gb",
+            text_color='white',
+            corner_radius=10,
+            font=('Arial',16)
+            )
+        self.space.pack(pady=5, anchor='w')
 
         self.label = ctk.CTkLabel(
             self.fr_label_info,
