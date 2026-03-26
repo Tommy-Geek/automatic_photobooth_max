@@ -19,7 +19,7 @@ def make_photo():
                 keyboard.send('ctrl+alt+space')
                 print(f"сделал кадр, текущая громкость = {initial_volume}")
                 volume.SetMasterVolumeLevel(-96.0, None) #скидываем в 0 громкость
-                time.sleep(1)
+                time.sleep(0.5)
             time.sleep(0.1)
     finally:
         pythoncom.CoUninitialize()

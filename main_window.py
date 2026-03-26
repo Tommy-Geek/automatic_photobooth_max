@@ -29,7 +29,6 @@ class Main_window(ctk.CTk):
         self.geometry('700x500')
 
         info = api.client.get_disk_info()
-        self.stop_flag = False
         self.bw_procces = BWProcessor()
         self.monitor = TwoMonitor(self)
         self.copy_active = False
@@ -52,13 +51,9 @@ class Main_window(ctk.CTk):
         self.fr_settings = ctk.CTkFrame(self.main_frame, height=70)
         self.fr_settings.grid(row = 1, column = 1, sticky='nsew')
 
-        self.fr_start = ctk.CTkFrame(self.main_frame, height=50)
-        self.fr_start.grid(row = 2, column = 0, sticky='nsew')
-        self.fr_start.grid_propagate(False)
-
-        self.fr_stop = ctk.CTkFrame(self.main_frame, height=70)
-        self.fr_stop.grid(row = 2, column = 1, sticky='nsew')
-        self.fr_stop.grid_propagate(False)
+        self.fr_button = ctk.CTkFrame(self.main_frame, height=50)
+        self.fr_button.grid(row = 2, column = 0, sticky='nsew', columnspan=2)
+        self.fr_button.grid_propagate(False)
 
 
         self.main_frame.grid_rowconfigure(0, weight=1)
@@ -74,7 +69,7 @@ class Main_window(ctk.CTk):
             text_color='white',
             corner_radius=10,
             font=('Arial',16)
-            )
+        )
         self.user_login.pack(pady=5, anchor='w')
 
         self.space = ctk.CTkLabel(
@@ -83,7 +78,7 @@ class Main_window(ctk.CTk):
             text_color='white',
             corner_radius=10,
             font=('Arial',16)
-            )
+        )
         self.space.pack(pady=5, anchor='w')
 
         self.label = ctk.CTkLabel(
@@ -92,7 +87,7 @@ class Main_window(ctk.CTk):
             text_color='white',
             corner_radius=10,
             font=('Arial', 16)
-            )
+        )
         self.label.place(relx=0.5, rely=0.5, anchor = 'center')
 
         self.label = ctk.CTkLabel(
@@ -101,76 +96,119 @@ class Main_window(ctk.CTk):
             text_color='white',
             corner_radius=10,
             font=('Arial', 16)
-            )
+        )
         self.label.place(relx=0.5, rely=0.5, anchor = 'center')
 
 
         self.enabled = ctk.BooleanVar()
-        self.check_box = ctk.CTkCheckBox(
+        self.bw_check_box = ctk.CTkCheckBox(
             self.fr_settings, 
             text = "B/W", 
             variable=self.enabled, 
             width=150,           
             height=60 
-            )
-        self.check_box.place(
+        )
+        self.bw_check_box.place(
             relx=0.5,           # 50% от ширины фрейма
-            rely=0.5,            # 50% от высоты фрейма
+            rely=0.6,            # 50% от высоты фрейма
             anchor='center',       # центр кнопки в центре фрейма            
         )
 
+
+        self.on_download_yadisk = ctk.BooleanVar()
+        self.yadisk_check_box = ctk.CTkCheckBox(
+            self.fr_settings, 
+            text = "download yadisk", 
+            variable=self.on_download_yadisk, 
+            width=150,           
+            height=60 
+        )
+        self.yadisk_check_box.place(
+            relx=0.5,           # 50% от ширины фрейма
+            rely=0.4,            # 50% от высоты фрейма
+            anchor='center',       # центр кнопки в центре фрейма         
+        )
+
         self.start_button = ctk.CTkButton(
-            self.fr_start, 
+            self.fr_button, 
             text = "Start", 
             command = self.start, 
             width=150,
             height=60
-            )
+        )
         self.start_button.place(
-            relx=0.5,           # 50% от ширины фрейма
+            relx=0.1,           # 50% от ширины фрейма
             rely=0.5,            # 50% от высоты фрейма
-            anchor='center'       # центр кнопки в центре фрейма            
+            anchor='w'       # центр кнопки в центре фрейма            
         )
 
         self.stop_button = ctk.CTkButton(
-            self.fr_stop, 
-            text = "Show QR", 
+            self.fr_button, 
+            text = "Stop", 
             state= 'disabled', 
             command = self.stop, 
             width=150,
             height=60
-            )
+        )
         self.stop_button.place(
+            relx=0.9,
+            rely=0.5,
+            anchor='e'
+        )
+
+        self.qr_code_button = ctk.CTkButton(
+            self.fr_button,
+            text = "Show QR",
+            state='disabled',
+            command= self.show_qr,
+            width=150,
+            height=60
+        )
+        self.qr_code_button.place(
             relx=0.5,
             rely=0.5,
             anchor='center'
-        )
-
+        ) 
 
     def start(self):
         delet_all_photo()
-        if not self.enabled.get():
-            self.normal_copying()
+        self.stop_button.configure(state='normal')
+        self.start_button.configure(state='disabled')
+        
+        self.normal_copying()
 
-        else:
-            self.normal_copying()
+        if self.enabled.get():
             self.bw_procces.start(self.copy_dir)
+
+        if self.on_download_yadisk.get():
+            self.api.create_folder(self.copy_dir)
+            self.download_yadisk()
+
+        
+    def download_yadisk(self):
+        if not self.copy_active: 
+            return
+        new_photo = check_last_photo()
+
+        if self.last_photo != new_photo:
+            self.last_photo = new_photo
+            threading.Thread(
+                    target=lambda: self.api.upload_photo(self.copy_dir, self.last_photo),
+                    daemon=True
+                ).start()
+        self.after(500, self.download_yadisk)
 
 
     def normal_copying(self):
         self.monitor.start()
-        self.start_button.config(state='disabled')
-        self.stop_button.config(state='normal')
 
         self.copy_dir = new_time_dir()
         self.last_photo = None
         self.copy_active = True
-        self.stop_flag = False
-
-        self.api.create_folder(self.copy_dir) #cоздам папку в я.д
 
         print("start")
         self.check_photo()
+
 
     def check_photo(self):
         if not self.copy_active:
@@ -181,28 +219,24 @@ class Main_window(ctk.CTk):
         if self.last_photo != new_photo:
             self.last_photo = new_photo
             copy_reserv(self.copy_dir, self.last_photo)
-            threading.Thread(
-                target=lambda: self.api.upload_photo(self.copy_dir, self.last_photo),
-                daemon=True
-            ).start()
         self.after(500, self.check_photo)
         
+    def show_qr(self):
+        """делает папку публичной и генерит qrcode"""
+        url = self.api.publish_folder(self.copy_dir)
+        create_qr(url, SESSION_PATH)
 
     def stop(self):
-        if not self.stop_flag:
-            url = self.api.publish_folder(self.copy_dir)
-            create_qr(url, SESSION_PATH)
-            self.copy_active = False
-            self.stop_button.config(text="Stop", state='normal')
-            self.stop_flag = True
+        if not self.copy_active:
+            return
         
-        else:
-            self.monitor.stop()
-            self.start_button.config(state='normal')
-            self.stop_button.config(state='disabled')
-            delet_all_photo()
-            self.stop_flag = False
-            self.bw_procces.stop()
+        self.copy_active = False
+        self.monitor.stop()
+        self.qr_code_button.configure(state='disabled')
+        self.start_button.configure(state='normal')
+        self.stop_button.configure(state='disabled')
+        delet_all_photo()
+        self.bw_procces.stop()
 
     def destroy(self):
         """автоматом убивает обьект второго монитора и краски при закрытии"""
