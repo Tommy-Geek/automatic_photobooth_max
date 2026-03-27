@@ -17,23 +17,23 @@ from start import Prelaunch
 from remove_control import make_photo
 from bw import BWProcessor
 import sys
+from api_yandex import YandexAPI, load_token
 
 
 class Main_window(ctk.CTk):
     
-    def __init__(self, api):
+    def __init__(self):
         super().__init__()
-        self.api = api
 
         ctk.set_appearance_mode("dark")
         self.geometry('700x500')
 
-        info = api.client.get_disk_info()
         self.bw_procces = BWProcessor()
         self.monitor = TwoMonitor(self)
         self.copy_active = False
         self.copy_dir = None
         self.last_photo = None 
+        self.api = None
 
         self.main_frame = ctk.CTkFrame(self)
         self.main_frame.pack(fill = 'both', expand = True)
@@ -65,7 +65,7 @@ class Main_window(ctk.CTk):
 
         self.user_login = ctk.CTkLabel(
             self.fr_info,
-            text = f"Login: {info.user.display_name}",
+            text = f"Login: Временно {None}",
             text_color='white',
             corner_radius=10,
             font=('Arial',16)
@@ -74,7 +74,7 @@ class Main_window(ctk.CTk):
 
         self.space = ctk.CTkLabel(
             self.fr_info,
-            text = f"Space left: {round((info.total_space - info.used_space)/1024**3, 2)}gb",
+            text = f"Временно {None}", #f"Space left: {round((info.total_space - info.used_space)/1024**3, 2)}gb"
             text_color='white',
             corner_radius=10,
             font=('Arial',16)
@@ -119,7 +119,8 @@ class Main_window(ctk.CTk):
         self.yadisk_check_box = ctk.CTkCheckBox(
             self.fr_settings, 
             text = "download yadisk", 
-            variable=self.on_download_yadisk, 
+            variable=self.on_download_yadisk,
+            command=self.toggle_yandex_api, 
             width=150,           
             height=60 
         )
@@ -181,9 +182,14 @@ class Main_window(ctk.CTk):
             self.bw_procces.start(self.copy_dir)
 
         if self.on_download_yadisk.get():
+            self.qr_code_button.configure(state='normal')
             self.api.create_folder(self.copy_dir)
             self.download_yadisk()
 
+
+    def toggle_yandex_api(self):
+        token = load_token()
+        self.api = YandexAPI(token)
         
     def download_yadisk(self):
         if not self.copy_active: 
@@ -262,5 +268,4 @@ if __name__ == "__main__":
     
     # Успешный предзапуск: запускаем фоновые задачи и главное окно
     threading.Thread(target=lambda: make_photo(), daemon=True).start()
-    api = prelaunch.get_api()
-    Main_window(api).mainloop()
+    Main_window().mainloop()

@@ -1,6 +1,9 @@
 import yadisk
 import os
-import requests
+import webbrowser
+import sys
+import tkinter.simpledialog as simpledialog
+
 
 class YandexAPI:
     def __init__(self, token):
@@ -41,3 +44,44 @@ class YandexAPI:
             public_url = self.client.get_meta(folder_name).public_url
             return public_url
 
+
+token_file = "token.txt"
+client_id = "aef14e72488c4f87bce1deff4d9120c6"
+
+def get_base_path():
+        #парсим базавый путь файла если это .exe или .py, рядом с запускашкой
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        else:
+            return os.path.dirname(os.path.abspath(__file__))
+
+
+def load_token():
+        #загружает токен из файла
+        token_path = os.path.join(get_base_path(), token_file)
+        try:
+            with open(token_path, "r") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            new_token = request_new_token()
+            if new_token is None:
+                raise ValueError("Токен не получен. Авторизация невозможна.")
+            return new_token
+
+
+def request_new_token(title = "Ошибка", message = "Вставте токен из браузера"):
+        '''запрашивает новый токен у пользователя'''
+        webbrowser.open(f"https://oauth.yandex.ru/authorize?response_type=token&client_id={client_id}")
+        new_token = simpledialog.askstring(title, message)
+        
+        if not new_token:
+            return None
+        
+        token_path = os.path.join(get_base_path(), token_file)
+        with open(token_path, "w", encoding="utf-8") as f:
+            f.write(new_token)
+        return new_token
+        
+
+
+        
