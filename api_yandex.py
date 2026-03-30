@@ -10,21 +10,38 @@ class YandexAPI:
         self.token = token
         self.client = yadisk.YaDisk(token=token)
 
-    def check_token(self):
-        """Проверяет, валиден ли текущий токен"""
-        with self.client:
-            return self.client.check_token()
+    # def check_token(self):
+    #     """Проверяет, валиден ли текущий токен"""
+    #     with self.client:
+    #         return self.client.check_token()
 
-    def update_token(self, new_token):
-        """Обновляет токен и пересоздаёт клиента"""
-        self.token = new_token
-        self.client = yadisk.YaDisk(token=new_token)
+    # def update_token(self, new_token):
+    #     """Обновляет токен и пересоздаёт клиента"""
+    #     self.token = new_token
+    #     self.client = yadisk.YaDisk(token=new_token)
 
     def create_folder(self, copy_dir):
         """Создаёт папку на Яндекс.Диске по имени, извлечённому из copy_dir"""
         with self.client:
             folder_name = copy_dir[-16:].replace('\\', '_')
             self.client.mkdir(f"/{folder_name}")
+    
+    def create_bw_folder(self, copy_dir):
+         with self.client:
+            folder_name = copy_dir[-16:].replace('\\', '_')
+            self.client.mkdir(f"/{folder_name}/bw")
+    
+
+    def upload_bw_photo(self, copy_dir, local_photo_path):
+        """Загружает ч/б фото в подпапку bw на Яндекс.Диске"""
+        if local_photo_path is None:
+            return
+        with self.client:
+            folder_name = copy_dir[-16:].replace('\\', '_')
+            file_name = os.path.basename(local_photo_path)
+            disk_path = f"/{folder_name}/bw/{file_name}"
+            self.client.upload(local_photo_path, disk_path)
+
 
     def upload_photo(self, copy_dir, last_photo):
         """Загружает фото на Яндекс.Диск в соответствующую папку"""

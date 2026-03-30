@@ -4,9 +4,15 @@ import time
 import os
 from control_dir import check_last_photo, b_and_w_dir
 from PIL import Image
+from api_yandex import YandexAPI, load_token
+
+
+token = load_token()
+api = YandexAPI(token)
+
 
 def full_painting_cycle(new_time_dir, bw_last):
-    """Ваша существующая функция (можно оставить как есть)"""
+    """покраска с переворотом в чб"""
     last_photo_dir_one = check_last_photo(new_time_dir)
     last_photo_dir_two = check_last_photo(bw_last)
     if last_photo_dir_one and last_photo_dir_one[-1] != "w" and last_photo_dir_one != last_photo_dir_two:
@@ -16,6 +22,11 @@ def full_painting_cycle(new_time_dir, bw_last):
             filename = os.path.basename(last_photo_dir_one)
             save_path = os.path.join(bw_last, filename)
             img.save(save_path)
+
+            try:
+                api.upload_bw_photo(new_time_dir, save_path)
+            except Exception as e:
+                print(f"ошибка {e}")
 
 # Функция, которая будет выполняться в отдельном процессе
 def _bw_worker(copy_dir, bw_last, stop_queue):
@@ -31,6 +42,7 @@ def _bw_worker(copy_dir, bw_last, stop_queue):
 
         try:
             full_painting_cycle(copy_dir, bw_last)
+
         except Exception as e:
             print(f"Ошибка в фоновом процессе: {e}")
 

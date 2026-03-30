@@ -32,7 +32,8 @@ class Main_window(ctk.CTk):
         self.monitor = TwoMonitor(self)
         self.copy_active = False
         self.copy_dir = None
-        self.last_photo = None 
+        self.last_photo_loacal = None
+        self.last_photo_yadisk = None 
         self.api = None
 
         self.main_frame = ctk.CTkFrame(self)
@@ -186,6 +187,9 @@ class Main_window(ctk.CTk):
             self.api.create_folder(self.copy_dir)
             self.download_yadisk()
 
+        if self.enabled.get() and self.on_download_yadisk.get():
+            self.api.create_bw_folder(self.copy_dir)
+
 
     def toggle_yandex_api(self):
         token = load_token()
@@ -196,10 +200,11 @@ class Main_window(ctk.CTk):
             return
         new_photo = check_last_photo()
 
-        if self.last_photo != new_photo:
-            self.last_photo = new_photo
+        if self.last_photo_yadisk != new_photo:
+            self.last_photo_yadisk = new_photo
             threading.Thread(
-                    target=lambda: self.api.upload_photo(self.copy_dir, self.last_photo),
+                    target=self.api.upload_photo,
+                    args=(self.copy_dir, new_photo),
                     daemon=True
                 ).start()
         self.after(500, self.download_yadisk)
@@ -209,7 +214,8 @@ class Main_window(ctk.CTk):
         self.monitor.start()
 
         self.copy_dir = new_time_dir()
-        self.last_photo = None
+        self.last_photo_loacal = None
+        self.last_photo_yadisk = None
         self.copy_active = True
 
         print("start")
@@ -217,14 +223,15 @@ class Main_window(ctk.CTk):
 
 
     def check_photo(self):
-        if not self.copy_active:
+        if self.copy_active == False:
             return
+        
         
         new_photo = check_last_photo()
 
-        if self.last_photo != new_photo:
-            self.last_photo = new_photo
-            copy_reserv(self.copy_dir, self.last_photo)
+        if self.last_photo_loacal != new_photo:
+            self.last_photo_loacal = new_photo
+            copy_reserv(self.copy_dir, self.last_photo_loacal)
         self.after(500, self.check_photo)
         
     def show_qr(self):
@@ -267,5 +274,5 @@ if __name__ == "__main__":
                 sys.exit(0)
     
     # Успешный предзапуск: запускаем фоновые задачи и главное окно
-    threading.Thread(target=lambda: make_photo(), daemon=True).start()
+    threading.Thread(target=make_photo, daemon=True).start()
     Main_window().mainloop()
