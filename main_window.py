@@ -17,6 +17,7 @@ from start import Prelaunch
 from remove_control import make_photo
 from bw import BWProcessor
 import sys
+import os
 from api_yandex import YandexAPI, load_token
 
 
@@ -34,6 +35,7 @@ class Main_window(ctk.CTk):
         self.copy_dir = None
         self.last_photo_loacal = None
         self.last_photo_yadisk = None 
+        self.last_photo_bw = None
         self.api = None
 
         self.main_frame = ctk.CTkFrame(self)
@@ -172,6 +174,7 @@ class Main_window(ctk.CTk):
             anchor='center'
         ) 
 
+
     def start(self):
         delet_all_photo()
         self.stop_button.configure(state='normal')
@@ -189,6 +192,23 @@ class Main_window(ctk.CTk):
 
         if self.enabled.get() and self.on_download_yadisk.get():
             self.api.create_bw_folder(self.copy_dir)
+            self.download_bw()
+        
+
+    def download_bw(self):
+        if not self.copy_active: 
+            return
+        bw_path = os.path.join(self.copy_dir, 'bw')
+        new_photo = check_last_photo(bw_path)
+
+        if self.last_photo_bw != new_photo and new_photo:
+            self.last_photo_bw = new_photo
+            threading.Thread(
+                    target=self.api.upload_bw_photo,
+                    args=(self.copy_dir, new_photo),
+                    daemon=True
+                ).start()
+        self.after(500, self.download_bw)
 
 
     def toggle_yandex_api(self):

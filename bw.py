@@ -4,11 +4,6 @@ import time
 import os
 from control_dir import check_last_photo, b_and_w_dir
 from PIL import Image
-from api_yandex import YandexAPI, load_token
-
-
-token = load_token()
-api = YandexAPI(token)
 
 
 def full_painting_cycle(new_time_dir, bw_last):
@@ -23,10 +18,6 @@ def full_painting_cycle(new_time_dir, bw_last):
             save_path = os.path.join(bw_last, filename)
             img.save(save_path)
 
-            try:
-                api.upload_bw_photo(new_time_dir, save_path)
-            except Exception as e:
-                print(f"ошибка {e}")
 
 # Функция, которая будет выполняться в отдельном процессе
 def _bw_worker(copy_dir, bw_last, stop_queue):
