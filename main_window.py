@@ -13,12 +13,14 @@ from control_dir import (
 import threading
 from tkinter import messagebox
 from qr_code import create_qr
+from seconde_monitor import has_seconde_monitor
 from start import Prelaunch
 from remove_control import make_photo
 from bw import BWProcessor
 import sys
 import os
-from api_yandex import YandexAPI, load_token
+
+from api_yandex import YandexAPI, load_token, request_new_token
 
 
 class Main_window(ctk.CTk):
@@ -66,9 +68,24 @@ class Main_window(ctk.CTk):
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(1, weight=1)
 
+
+        if not has_seconde_monitor():
+            self.text = "Не обнаружен"
+        else:
+            self.text = "Обнаружен"
+
+        self.seconde_monitor = ctk.CTkLabel(
+            self.fr_info,
+            text= f"Второй монитор: {self.text}",
+            text_color='white',
+            corner_radius=10,
+            font=('Arial',16)
+        )
+        self.seconde_monitor.pack(pady=5, anchor='w')
+
         self.user_login = ctk.CTkLabel(
             self.fr_info,
-            text = f"Login: Временно {None}",
+            text="Login: не авторизован",
             text_color='white',
             corner_radius=10,
             font=('Arial',16)
@@ -77,12 +94,23 @@ class Main_window(ctk.CTk):
 
         self.space = ctk.CTkLabel(
             self.fr_info,
-            text = f"Временно {None}", #f"Space left: {round((info.total_space - info.used_space)/1024**3, 2)}gb"
+            text="Свободное место: не авторизован",
             text_color='white',
             corner_radius=10,
             font=('Arial',16)
         )
         self.space.pack(pady=5, anchor='w')
+
+        token = load_token()
+        if token:
+            try:
+                self.api = YandexAPI(token)
+                info = self.api.client.get_disk_info()
+                self.user_login.configure(text=f"Login: {info.user.display_name}")
+                free_gb = round((info.total_space - info.used_space) / 1024**3, 2)
+                self.space.configure(text=f"Свободно: {free_gb} ГБ")
+            except Exception:
+                pass
 
         self.label = ctk.CTkLabel(
             self.fr_label_info,
@@ -213,7 +241,18 @@ class Main_window(ctk.CTk):
 
     def toggle_yandex_api(self):
         token = load_token()
-        self.api = YandexAPI(token)
+        if token is None:
+            token = request_new_token()
+        if token:
+            self.api = YandexAPI(token)
+            try:
+                info = self.api.client.get_disk_info()
+                self.user_login.configure(text=f"Login: {info.user.display_name}")
+                free_gb = round((info.total_space - info.used_space) / 1024**3, 2)
+                self.space.configure(text=f"Свободно: {free_gb} ГБ")
+            except Exception as e:
+                self.user_login.configure(text="Login: ошибка")
+                self.space.configure(text="Свободно: ошибка")
         
     def download_yadisk(self):
         if not self.copy_active: 
@@ -245,7 +284,6 @@ class Main_window(ctk.CTk):
     def check_photo(self):
         if self.copy_active == False:
             return
-        
         
         new_photo = check_last_photo()
 

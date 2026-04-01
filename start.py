@@ -1,4 +1,4 @@
-import screeninfo
+
 import subprocess
 import os
 import tkinter.messagebox as messagebox
@@ -7,7 +7,6 @@ import sys
 
 
 class Prelaunch():
-    """предзапуск над полностью переделать и пофиксить токен.txt"""
 
     def check_proc(self, name_process="CameraControl.exe"):
         '''проверяю запущен ли СameraСontrol'''
@@ -22,7 +21,7 @@ class Prelaunch():
             if name_process not in output.stdout:
                 subprocess.Popen(["C:\\Program Files (x86)\\digiCamControl\\CameraControl.exe"])
         
-            return True  # Возвращаем True, если всё ок
+            return True
         
         except FileNotFoundError:
             return False, "Системе не удается найти digiCamControl по пути C:\\Program Files (x86)\\digiCamControl\\CameraControl.exe"
@@ -30,16 +29,6 @@ class Prelaunch():
             return False, "Отказано в доступе. Запустите программу от имени администратора"
         except Exception as e:
             return False, f"Ошибка при запуске digiCamControl: {e}"
-
-    def check_seconde_monitor(self):
-        '''проверяю есть ли в системе второй монитор скип при запуске если false'''
-        try:
-            monitors = screeninfo.get_monitors()
-            if len(monitors) < 2:
-                return False, "Подключите второй монитор"
-            return True
-        except Exception as e:
-            return False, f"Ошибка при проверке мониторов: {e}"
 
     def check_session(self):
         '''проверяю существует ли путь сессии digicam'''
@@ -68,7 +57,6 @@ class Prelaunch():
         # Проверяем каждую функцию и собираем ошибки
         checks = [
             ("digiCamControl", self.check_proc()),
-            ("Второй монитор", self.check_seconde_monitor()),
             ("Сессия", self.check_session()),
             ("Папка резерва", self.check_reserv()),
         ]

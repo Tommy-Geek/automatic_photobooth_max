@@ -27,6 +27,7 @@ class YandexAPI:
             self.client.mkdir(f"/{folder_name}")
     
     def create_bw_folder(self, copy_dir):
+         """create folder: name bw in main folder"""
          with self.client:
             folder_name = copy_dir[-16:].replace('\\', '_')
             self.client.mkdir(f"/{folder_name}/bw")
@@ -80,10 +81,7 @@ def load_token():
             with open(token_path, "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            new_token = request_new_token()
-            if new_token is None:
-                raise ValueError("Токен не получен. Авторизация невозможна.")
-            return new_token
+            return None
 
 
 def request_new_token(title = "Ошибка", message = "Вставте токен из браузера"):

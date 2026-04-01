@@ -1,6 +1,8 @@
 import win32api
 import win32con
+import screeninfo
 
+monitor = screeninfo.get_monitors()
 
 def main_monitor_size()-> list:
 
@@ -15,17 +17,27 @@ def main_monitor_size()-> list:
     return main_size
 
 
+def has_seconde_monitor():
+    if len(monitor) < 2:
+        return False
+    else:
+        return True
+
+
 def seconde_monitor_size():
-
-    d = win32api.EnumDisplayDevices(None, 1)
-    dm = win32api.EnumDisplaySettings(d.DeviceName, win32con.ENUM_CURRENT_SETTINGS)
+        if not has_seconde_monitor():
+            return None
+        try:
+            d = win32api.EnumDisplayDevices(None, 1)
+            dm = win32api.EnumDisplaySettings(d.DeviceName, win32con.ENUM_CURRENT_SETTINGS)
     
-    width = max(dm.PelsWidth, dm.PelsHeight)
-    height = min(dm.PelsWidth, dm.PelsHeight)
+            width = max(dm.PelsWidth, dm.PelsHeight)
+            height = min(dm.PelsWidth, dm.PelsHeight)
     
-    seconde_size = [width, height]
+            seconde_size = [width, height]
 
-    return seconde_size
+            return seconde_size
+        except: return None
 
 
 def rotate_and_get_coords():
@@ -46,3 +58,4 @@ def rotate_and_get_coords():
         dm.Fields = win32con.DM_PELSWIDTH | win32con.DM_PELSHEIGHT | win32con.DM_DISPLAYORIENTATION
         
         win32api.ChangeDisplaySettingsEx(d.DeviceName, dm)
+

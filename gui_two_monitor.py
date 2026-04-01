@@ -1,17 +1,28 @@
 from tkinter import *
-from seconde_monitor import main_monitor_size, seconde_monitor_size, rotate_and_get_coords
+from seconde_monitor import main_monitor_size, seconde_monitor_size, rotate_and_get_coords, has_seconde_monitor
 from control_dir import check_last_photo
 from PIL import Image, ImageTk
 
 class TwoMonitor(Toplevel):
     def __init__(self, master = None):
         super().__init__(master)
+
+        if not has_seconde_monitor():
+            self.available = False
+            self.withdraw()
+            return
         
         self.one_monitor = main_monitor_size()
         self.two_monitor = seconde_monitor_size()
 
+        if self.two_monitor is None:
+            self.available = False
+            self.withdraw()
+            return
+
         rotate_and_get_coords()
 
+        self.available = True
         self.title(None)     # устанавливаем заголовок окна
         self.geometry(f"{self.two_monitor[1]}x{self.two_monitor[0]}+{self.one_monitor[0]}+0")
         self.overrideredirect(True)
@@ -29,6 +40,8 @@ class TwoMonitor(Toplevel):
     
     def update_photo(self):
         """Обновление фото"""
+        if not self.available:
+            return
         if self.active:
             new_photo = check_last_photo()
             if new_photo != self.current_photo:
@@ -42,6 +55,8 @@ class TwoMonitor(Toplevel):
 
     def start(self):
         """Запуск показа фото"""
+        if not self.available:
+            return
         if not self.active:
             self.active = True
             if self.after_id is None:
@@ -49,6 +64,8 @@ class TwoMonitor(Toplevel):
 
     def stop(self):
         """Остановка показа фото"""
+        if not self.available:
+            return
         self.active = False
         self.label.config(image='')
         self.current_photo = None
