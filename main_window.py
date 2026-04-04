@@ -8,7 +8,6 @@ from control_dir import (
     check_last_photo, 
     copy_reserv, 
     SESSION_PATH, 
-    b_and_w_dir
     )
 import threading
 from tkinter import messagebox
@@ -39,6 +38,8 @@ class Main_window(ctk.CTk):
         self.last_photo_yadisk = None 
         self.last_photo_bw = None
         self.api = None
+        self.in_all_photo = 0
+        self.bw_painting = 0
 
         self.main_frame = ctk.CTkFrame(self)
         self.main_frame.pack(fill = 'both', expand = True)
@@ -81,7 +82,7 @@ class Main_window(ctk.CTk):
             corner_radius=10,
             font=('Arial',16)
         )
-        self.seconde_monitor.pack(pady=5, anchor='w')
+        self.seconde_monitor.pack(pady=5, anchor='center')
 
         self.user_login = ctk.CTkLabel(
             self.fr_info,
@@ -90,7 +91,7 @@ class Main_window(ctk.CTk):
             corner_radius=10,
             font=('Arial',16)
         )
-        self.user_login.pack(pady=5, anchor='w')
+        self.user_login.pack(pady=5, anchor='center')
 
         self.space = ctk.CTkLabel(
             self.fr_info,
@@ -99,7 +100,38 @@ class Main_window(ctk.CTk):
             corner_radius=10,
             font=('Arial',16)
         )
-        self.space.pack(pady=5, anchor='w')
+        self.space.pack(pady=5, anchor='center')
+
+
+        self.total_photo = ctk.CTkLabel(
+            self.fr_info,
+            text="Всего фото: 0",
+            text_color='white',
+            corner_radius=10,
+            font=('Arial', 16)
+        )
+        self.total_photo.pack(pady=5, anchor='center')
+
+
+        self.painting_photo = ctk.CTkLabel(
+            self.fr_info,
+            text="Покрашено: 0",
+            text_color='white',
+            corner_radius=10,
+            font=('Arial', 16)
+        )
+        self.painting_photo.pack(pady=5, anchor='center')
+
+
+        self.sent_photo = ctk.CTkLabel(
+            self.fr_info,
+            text="Отправлено: 0",
+            text_color='white',
+            corner_radius=10,
+            font=('Arial', 16)
+        )
+        self.sent_photo.pack(pady=5, anchor='center')
+
 
         token = load_token()
         if token:
@@ -205,6 +237,9 @@ class Main_window(ctk.CTk):
 
     def start(self):
         delet_all_photo()
+        self.sent_photo.configure(text="Отправлено: 0")
+        self.painting_photo.configure(text="Покрашено: 0")
+        self.total_photo.configure(text="Всего фото: 0")
         self.stop_button.configure(state='normal')
         self.start_button.configure(state='disabled')
         
@@ -212,6 +247,7 @@ class Main_window(ctk.CTk):
 
         if self.enabled.get():
             self.bw_procces.start(self.copy_dir)
+            self.update_bw_label()
 
         if self.on_download_yadisk.get():
             self.qr_code_button.configure(state='normal')
@@ -222,6 +258,13 @@ class Main_window(ctk.CTk):
             self.api.create_bw_folder(self.copy_dir)
             self.download_bw()
         
+    
+
+    def update_bw_label(self):
+        bw_dir = os.path.join(self.copy_dir, "bw")
+        self.bw_painting = self.amount_photo(bw_dir, self.painting_photo, self.bw_painting)
+        self.after(500, self.update_bw_label)
+
 
     def download_bw(self):
         if not self.copy_active: 
@@ -238,6 +281,7 @@ class Main_window(ctk.CTk):
                 ).start()
         self.after(500, self.download_bw)
 
+        self.total_photo
 
     def toggle_yandex_api(self):
         token = load_token()
@@ -250,7 +294,7 @@ class Main_window(ctk.CTk):
                 self.user_login.configure(text=f"Login: {info.user.display_name}")
                 free_gb = round((info.total_space - info.used_space) / 1024**3, 2)
                 self.space.configure(text=f"Свободно: {free_gb} ГБ")
-            except Exception as e:
+            except Exception as er:
                 self.user_login.configure(text="Login: ошибка")
                 self.space.configure(text="Свободно: ошибка")
         
@@ -262,11 +306,27 @@ class Main_window(ctk.CTk):
         if self.last_photo_yadisk != new_photo:
             self.last_photo_yadisk = new_photo
             threading.Thread(
-                    target=self.api.upload_photo,
+                    target=self.upload_photo_wrapper,
                     args=(self.copy_dir, new_photo),
                     daemon=True
                 ).start()
         self.after(500, self.download_yadisk)
+
+
+    def upload_photo_wrapper(self, copy_dir, photo_path):
+        """Обёртка для вызова загрузки с последующим обновлением счётчика."""
+        success = self.api.upload_photo(copy_dir, photo_path)
+        if success:
+            self.after(0, self.increment_counter(self.sent_photo))
+
+
+    def increment_counter(self, label: ctk.CTkLabel):
+        """Увеличивает счётчик фото"""
+        text = label.cget("text")
+        parts = text.split(": ")
+        prefix = parts[0]
+        current_num = int(parts[1])
+        label.configure(text=f"{prefix}: {current_num + 1}")
 
 
     def normal_copying(self):
@@ -285,17 +345,29 @@ class Main_window(ctk.CTk):
         if self.copy_active == False:
             return
         
+        self.in_all_photo = self.amount_photo(SESSION_PATH, self.total_photo, self.in_all_photo)
         new_photo = check_last_photo()
 
         if self.last_photo_loacal != new_photo:
             self.last_photo_loacal = new_photo
             copy_reserv(self.copy_dir, self.last_photo_loacal)
         self.after(500, self.check_photo)
-        
+
+
+    def amount_photo(self, dir, label, initial_quantity):
+        amount = len(os.listdir(dir))
+        if initial_quantity != amount:
+            print(amount, initial_quantity)
+            initial_quantity += 1
+            self.increment_counter(label)
+        return initial_quantity
+
+
     def show_qr(self):
         """делает папку публичной и генерит qrcode"""
         url = self.api.publish_folder(self.copy_dir)
         create_qr(url, SESSION_PATH)
+
 
     def stop(self):
         if not self.copy_active:

@@ -49,10 +49,14 @@ class YandexAPI:
         if last_photo is None:
             return
         with self.client:
-            folder_name = copy_dir[-16:].replace('\\', '_')
-            file_name = os.path.basename(last_photo)
-            disk_path = f"/{folder_name}/{file_name}"
-            self.client.upload(last_photo, disk_path)
+            try:
+                folder_name = copy_dir[-16:].replace('\\', '_')
+                file_name = os.path.basename(last_photo)
+                disk_path = f"/{folder_name}/{file_name}"
+                self.client.upload(last_photo, disk_path)
+                return True
+            except Exception as er:
+                return False
 
     def publish_folder(self, copy_dir):
         '''делает папаку публичной и возвращает ее url для формирования qrcode'''

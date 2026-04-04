@@ -20,9 +20,9 @@ def full_painting_cycle(new_time_dir, bw_last):
 
 
 # Функция, которая будет выполняться в отдельном процессе
-def _bw_worker(copy_dir, bw_last, stop_queue):
+def bw_worker(copy_dir, bw_last, stop_queue):
     """проверка флага стопа и бесконечный цикл с проверкой фото"""
-    import time  #почитать про какой то пикл
+    import time
     while True:
         try:
             if not stop_queue.empty():
@@ -58,7 +58,7 @@ class BWProcessor:
         self.stop_queue = Queue()
 
         self.process = Process(
-            target=_bw_worker,
+            target=bw_worker,
             args=(self.copy_dir, self.bw_dir, self.stop_queue)
         )
         self.process.start()
