@@ -10,7 +10,7 @@ def make_photo():
     try:
         device = AudioUtilities.GetSpeakers()
         volume = device.EndpointVolume
-        volume.SetMasterVolumeLevel(-96.0, None) #скидываем в 0 громкость
+        volume.SetMasterVolumeLevelScalar(0.0, None) #скидываем в 0 громкость
         initial_volume = volume.GetMasterVolumeLevel()
 
         while True:
@@ -18,7 +18,7 @@ def make_photo():
             if initial_volume != current_volume:
                 keyboard.send('ctrl+alt+space')
                 print(f"сделал кадр, текущая громкость = {initial_volume}")
-                volume.SetMasterVolumeLevel(-96.0, None) #скидываем в 0 громкость
+                volume.SetMasterVolumeLevelScalar(0.0, None) #скидываем в 0 громкость
                 time.sleep(0.5)
             time.sleep(0.1)
     finally:

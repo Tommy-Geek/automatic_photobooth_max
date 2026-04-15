@@ -3,7 +3,7 @@ import subprocess
 import os
 import tkinter.messagebox as messagebox
 import tkinter.simpledialog as simpledialog
-import sys
+
 
 
 class Prelaunch():
