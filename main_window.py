@@ -242,6 +242,9 @@ class Main_window(ctk.CTk):
         self.total_photo.configure(text="Всего фото: 0")
         self.stop_button.configure(state='normal')
         self.start_button.configure(state='disabled')
+
+        self.in_all_photo = 0
+        self.bw_painting = 0
         
         self.normal_copying()
 
